@@ -54,9 +54,9 @@ mod build_bundled {
         }
         #[cfg(not(feature = "buildtime_bindgen"))]
         {
-            use std::fs;
-            fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
-                .expect("Could not copy bindings to output directory");
+            // use std::fs;
+            // fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
+            //     .expect("Could not copy bindings to output directory");
         }
 
         let mut cfg = cc::Build::new();
@@ -181,8 +181,8 @@ mod build_linked {
             // on buildtime_bindgen instead, but this is still supported as we
             // have runtime version checks and there are good reasons to not
             // want to run bindgen.
-            std::fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
-                .expect("Could not copy bindings to output directory");
+            // std::fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
+            //     .expect("Could not copy bindings to output directory");
         } else {
             bindings::write_to_out_dir(header, out_path);
         }

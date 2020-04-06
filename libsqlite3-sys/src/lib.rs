@@ -50,10 +50,31 @@ pub enum Limit {
     SQLITE_LIMIT_WORKER_THREADS = 11,
 }
 
+// #[cfg(not(all(
+//     any(
+//         feature = "bundled_bindings",
+//         feature = "bundled",
+//         all(windows, feature = "bundled-windows")
+//     ),
+//     not(feature = "buildtime_bindgen")
+// )))]
+// #[allow(clippy::all)]
+// mod bindings {
+//     include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
+// }
+// #[cfg(all(
+//     any(
+//         feature = "bundled_bindings",
+//         feature = "bundled",
+//         all(windows, feature = "bundled-windows")
+//     ),
+//     not(feature = "buildtime_bindgen")
+// ))]
 #[allow(clippy::all)]
 mod bindings {
-    include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
+    include!("../sqlite3/bindgen_bundled_version.rs");
 }
+
 pub use bindings::*;
 
 pub type sqlite3_index_constraint = sqlite3_index_info_sqlite3_index_constraint;
