@@ -166,6 +166,22 @@ enabled if you turn this on, as otherwise you'll need to keep the version of
 SQLite you link with in sync with what rusqlite would have bundled, (usually the
 most recent release of sqlite). Failing to do this will cause a runtime error.
 
+## Contributing
+
+Rusqlite has many features, and many of them impact the build configuration in
+incompatible ways. This is unfortunate, and makes testing changes hard.
+
+To help here: you generally should ensure that you run tests/lint for both
+`--features bundled` and `--features bundled-full`
+
+### Checklist
+
+- Run `cargo fmt` to ensure your Rust code is correctly formatted.
+- Ensure `cargo clippy --all-targets --workspace --features bundled-full` passes without warnings.
+- Ensure `cargo clippy --all-targets --workspace --features bundled` passes without warnings.
+- Ensure `cargo test --all-targets --workspace --features bundled-full` reports no failures.
+- Ensure `cargo test --all-targets --workspace --features bundled` reports no failures.
+
 ## Author
 
 John Gallagher, johnkgallagher@gmail.com
