@@ -7,7 +7,7 @@ fn main() {
     if cfg!(feature = "in_gecko") {
         // When inside mozilla-central, we are included into the build with
         // sqlite3.o directly, so we don't want to provide any linker arguments.
-        std::fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
+        std::fs::copy(bundled_bindings_path(), out_path)
             .expect("Could not copy bindings to output directory");
         return;
     }
@@ -35,6 +35,14 @@ fn main() {
     }
 }
 
+fn bundled_bindings_path() -> &'static str {
+    if cfg!(feature = "session") {
+        "sqlite3/bindgen_bundled_version_with_session.rs"
+    } else {
+        "sqlite3/bindgen_bundled_version.rs"
+    }
+}
+
 #[cfg(any(feature = "bundled", all(windows, feature = "bundled-windows")))]
 mod build_bundled {
     use std::env;
@@ -55,7 +63,7 @@ mod build_bundled {
         #[cfg(not(feature = "buildtime_bindgen"))]
         {
             use std::fs;
-            fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
+            fs::copy(super::bundled_bindings_path(), out_path)
                 .expect("Could not copy bindings to output directory");
         }
 
@@ -181,7 +189,7 @@ mod build_linked {
             // on buildtime_bindgen instead, but this is still supported as we
             // have runtime version checks and there are good reasons to not
             // want to run bindgen.
-            std::fs::copy("sqlite3/bindgen_bundled_version.rs", out_path)
+            std::fs::copy(super::bundled_bindings_path(), out_path)
                 .expect("Could not copy bindings to output directory");
         } else {
             bindings::write_to_out_dir(header, out_path);
