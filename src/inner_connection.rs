@@ -425,6 +425,17 @@ To fix this, either:
                 if ffi::sqlite3_config(ffi::SQLITE_CONFIG_MULTITHREAD) != ffi::SQLITE_OK {
                     panic!(msg);
                 }
+                #[cfg(feature = "mimalloc_memdbg")]
+                {
+                    if ffi::sqlite3_config(
+                        ffi::SQLITE_CONFIG_MALLOC,
+                        (&memdbg::MEM_METHODS) as *const _ as *const ffi::sqlite3_mem_methods,
+                    ) != ffi::SQLITE_OK
+                    {
+                        panic!(msg);
+                    }
+                }
+
                 if ffi::sqlite3_initialize() != ffi::SQLITE_OK {
                     panic!(msg);
                 }
@@ -432,4 +443,53 @@ To fix this, either:
         });
         Ok(())
     }
+}
+#[cfg(feature = "mimalloc_memdbg")]
+mod memdbg {
+    use super::*;
+    unsafe extern "C" fn x_malloc(s: c_int) -> *mut c_void {
+        debug_assert!(s >= 0);
+        mimalloc::ffi::mi_malloc(s as usize)
+    }
+
+    unsafe extern "C" fn x_realloc(p: *mut c_void, l: c_int) -> *mut c_void {
+        debug_assert!(l >= 0);
+        mimalloc::ffi::mi_realloc(p, l as usize)
+    }
+
+    unsafe extern "C" fn x_size(p: *mut c_void) -> c_int {
+        let sz = mimalloc::ffi::mi_usable_size(p);
+        debug_assert!(sz < c_int::max_value() as usize);
+        sz as c_int
+    }
+
+    unsafe extern "C" fn x_round_up(p: c_int) -> c_int {
+        debug_assert!(p >= 0);
+        let sz = mimalloc::ffi::mi_good_size(p as usize);
+        debug_assert!(sz < c_int::max_value() as usize);
+        sz as c_int
+    }
+
+    // unsafe extern "C" fn x_init(_: *mut c_void) -> {}
+    // unsafe extern "C" fn x_shutdown(_: *mut c_void) {}
+
+    use std::os::raw::c_void;
+
+    #[repr(transparent)]
+    pub(super) struct MemMethods(ffi::sqlite3_mem_methods);
+    unsafe impl Send for MemMethods {}
+    unsafe impl Sync for MemMethods {}
+    pub(super) static MEM_METHODS: MemMethods = MemMethods(ffi::sqlite3_mem_methods {
+        xMalloc: Some(x_malloc),
+        xFree: Some(mimalloc::ffi::mi_free),
+        xRealloc: Some(x_realloc),
+        xSize: Some(x_size),
+        xRoundup: Some(x_round_up),
+        xInit: None,     //Some(x_init),
+        xShutdown: None, //Some(x_shutdown),
+        pAppData: ptr::null_mut(),
+    });
+
+    #[global_allocator]
+    static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 }
